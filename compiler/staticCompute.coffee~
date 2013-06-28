@@ -1,0 +1,4 @@
+
+exports.staticCompute = (node,results)->
+    true
+    

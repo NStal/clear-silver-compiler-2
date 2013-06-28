@@ -1,0 +1,7 @@
+* DONE HDF comprehension 
+* DONE macro expand
+* DONE token recognize string in ""
+* TODO better modulenames: no capital name because windows don't differ them
+* TODO allow node refer to another node and check recursive refer
+* TODO include support
+* TODO loop

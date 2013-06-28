@@ -1,0 +1,10 @@
+expression = require "../common/expression.coffee"
+#x = new expression.Expression("a.b.c+x.y['z']+m[x['n']].z")
+#x = new expression.Expression("4+Foo(test)+5")
+x = new expression.Expression("x.y[z]+5")
+x.print()
+x = new expression.Expression("x.y[z][m]+5")
+x.print()
+x = new expression.Expression("x.y[a[z]][m]+5")
+x.print()
+#x.print()

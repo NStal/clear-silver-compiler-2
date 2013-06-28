@@ -1,0 +1,147 @@
+fs = require "fs"
+Flatten = require "./flatten.coffee"
+class Context
+    constructor:()->
+        @variableIndex = 0
+        @variableIdMapTable = []
+        @defineTables = []
+    getVariableName:(id,hint)->
+        hint = hint or "_"
+        if @variableIdMapTable[id]
+            return @variableIdMapTable[id]
+        @variableIdMapTable[id] = "__CSVar"+hint+id
+        return @variableIdMapTable[id]
+    
+Templates = {
+    "if":"""
+{precalculate}
+if(CSIf({expression})){
+    {body}
+}else{
+    {elseBody}
+}
+"""
+    ,"each":"""
+var refer = HdfRef('{hdf}');
+for(var index=0;index<refer.nodes.length;index++){
+    HdfSet('{name}',refer.nodes[index]);
+    {body}
+}
+"""
+    ,"var":"""{precalculate}
+CSVar({expression});
+"""
+    ,"set":"""{precalculate}
+HdfSet('{hdf}',{expression});
+"""
+    ,"echo":"""CSEcho('{validString}');"""
+    }
+exports.Context = Context
+exports.assamble = (ACTree,context)->
+    codes = []
+    for node in ACTree
+        codes.push translate(node,context)
+    return codes.join "\n"
+    
+OperateNameMap = {
+    "+":"add"
+    ,"-":"minus"
+    ,"*":"multiply"
+    ,"/":"divide"
+    ,"%":"mod"
+}
+translateExpression = (flattendExpression,context)->
+    results = []
+    for action in flattendExpression
+        tVarName = context.getVariableName(action.id)
+        if action.type is "init"
+            # var foo = CSValue(initValue)
+            results.push ["var ",tVarName,"=","CSValue(\'",action.value.content,"\');"].join("")
+            continue
+        else if action.type is "functionEval"
+            # var foo = FunctionCall(param1,param2...)
+            params = (context.getVariableName(item) for item in action.params).join(",")
+            results.push ["var ",context.getVariableName(action.id),"=",action.functionName+"(",params,");"].join("")
+            continue
+        else if action.type is "operator"
+            # var foo = OpName(param1,param2)
+            console.assert OperatorNameMap[action.operater],"Should be an known operater"
+            operateName = OperatorNameMap[action.operater]
+            params = (context.getVariableName(item) for item in action.params).join(",")
+            results.push ["var ",context.getVariableName(action.id),"=","CSOperate_"+operateName+"(",params,");"]
+            continue
+        throw new Error "Unexpect flattend expression "+action.type
+    return results.join("\n")
+        
+translate = (node,context)->
+    # flatten node expressions 
+    if node.expressions
+        node.flattendExpressions = []
+        for item in node.expressions 
+            node.flattendExpressions.push Flatten.flatten(item)
+    template = Templates[node.type]
+    if not template
+        throw new Error "Missing template:"+node.type
+    body = []
+    for child in node.body
+        body.push translate(child,context)
+    bodyCode = body.join("\n")
+    elseBody = []
+    if node.elseNode
+        for child in node.elseNode.body
+            elseBody.push translate(child,context)
+    elseBodyCode = elseBody.join("\n")
+    precalculate = []
+    expression = null
+    # current only has 1 expression
+    if node.flattendExpressions
+        exp = node.flattendExpressions[0]
+        precalculate.push translateExpression(exp.actions,context)
+        
+        expression = context.getVariableName(exp.finalValue.id)
+    else
+        expression = ""
+    precalculateCode = precalculate.join("\n")
+    name = node.names and node.names[0] or null
+    hdf = node.hdfRefs and node.hdfRefs[0] or null
+    if typeof node.validString is "string"
+        validString = node.validString
+    else
+        validString = null
+    code = fillTemplate(template,{body:bodyCode,expression:expression,precalculate:precalculateCode,name:name,hdf:hdf,validString:validString,elseBody:elseBodyCode})
+    return code
+        
+fillTemplate = (format,data)->
+    # It's slow and optimizable
+    replacements = []
+    safeWord = parseInt(Math.random()*10000000000000).toString()+parseInt(Math.random()*10000000000000).toString()
+    safeIndex = 0
+    for item of data
+        if data[item] instanceof Array
+            for itemOfArr,index in data[item]
+                console.assert typeof itemOfArr is "string",data,"fillTemplate only accept objects consist of string and Array of string"
+                if (format.indexOf "{"+item+index+"}") >= 0
+                    replacements.push {holder:"{"+item+index+"}",content:itemOfArr.toString(),safeWord:safeWord+(safeIndex++)}
+        else if typeof data[item] is "string" or data[item] is null
+            if (format.indexOf "{"+item+"}") >= 0
+                replacements.push {holder:"{"+item+"}",content:data[item],safeWord:safeWord+(safeIndex++)}
+        else
+            throw new Error "fillTemplate only accept objects consist of string and Array of string"
+    # use safeWord to avoid unwanted replacement in code
+    for item in replacements
+        format = format.replace(new RegExp(item.holder,"g"),item.safeWord)
+        
+    for item in replacements
+        if item.content is null
+            throw new Error "expect "+item.holder+" but has null"
+        format = format.replace(new RegExp(item.safeWord,"g"),item.content)
+    return format
+
+exports.link = (heads,tails,code)->
+    codes = []
+    for head in heads
+        codes.push fs.readFileSync(head).toString()
+    codes.push code
+    for tail in tails
+        codes.push fs.readFileSync(tail).toString()
+    return codes.join("\n")

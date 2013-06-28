@@ -1,0 +1,49 @@
+# according to lespeng's idea
+# clear silver's macro has no scope and always be declare no matter when and where it's written
+#
+# say:
+# if true
+#    donothing()
+# else
+#    def:(...)
+#
+# though def:(..) will never be excuted
+# the macro is defined
+
+expandMacro = (tree,macros)->
+    if not macros
+        macros = []
+    if not tree or not tree.length or tree.length <= 0
+        return tree
+    filter = []
+    for node,index in tree
+        if not node
+            true
+            #console.log "undefined",index,tree.length,tree
+        if node.type is "def"
+            expandMacro(node.body,macros)
+            macros.push node
+            tree[index] = null
+        if node.type is "call"
+            expandCall node,macros
+        if node.type is "if"
+            # find macro in else if node
+            if node.elseIfList.length > 0
+                for elseIfNode in node.elseIfList
+                    expandMacro(elseIfNode.body,macros)
+            if node.elseNode
+                expandMacro(node.elseNode.body,macros)
+        if node.body and node.body.length > 0
+            expandMacro(node.body,macros)
+    length = tree.length
+    cursor = 0
+    testCursor = 0
+    for _ in [0...length]
+        if tree[testCursor]
+            tree[cursor] = tree[testCursor]
+            cursor++
+        testCursor++
+    tree.length = cursor
+    return macros
+exports.expandMacro = expandMacro
+expandCall = (callNode,macros)->

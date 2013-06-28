@@ -1,0 +1,31 @@
+require("coffee-script")
+acsblock = require "../ast/acsblock.coffee"
+acsblockTree = require "../ast/acsblock-tree.coffee"
+act = require "../act/act.coffee"
+compiler = require "../compiler/compiler.coffee"
+precompiler = require "../compiler/precompiler.coffee"
+ast = require "../ast/ast.coffee"
+acsblockTree
+fs = require "fs"
+testFile = "./test/case/comprehensive.cs"
+testFile = "./test/test3.cs"
+csString = (fs.readFileSync testFile).toString()
+acsblockList = null
+blocks = acsblock.parseACSBlocks(csString)
+#console.log "blocks",blocks
+acsblockList = blocks
+tree = acsblockTree.parseACSBTree(acsblockList)
+acsblockTree.printTree(tree)
+ACSBTree = tree
+acsblockTree.traverse(tree,ast.extractAndAttachExpression)
+##change into actree
+acsblockTree.traverse(tree,act.convertToACTNode)
+#tree = precompiler.expandMacro(tree)
+#console.log "============================================"
+#acsblockTree.printTree(tree)
+#console.log macros.length
+#code = compiler.assamble(tree,new compiler.Context())
+#result = compiler.link(["./lang/js/head.js","./lang/js/wrapperBegin.js"],["lang/js/wrapperEnd.js","./lang/js/tail.js"],code)
+#console.log result
+#
+# 

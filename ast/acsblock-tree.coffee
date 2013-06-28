@@ -1,0 +1,218 @@
+error = require "../error/error.coffee"
+Array.prototype.last = ()->
+    if this.length is 0
+        return null
+    return this[this.length-1]
+class ASTNode
+    constructor:(block)->
+        console.assert block
+        @body = []
+        @block = block
+        @type = block.type
+        @content = block.content
+        @index = @block.index
+    nextIndex:()->
+        if @endIfNode
+            return @endIfNode.index+1
+        if @endEachNode
+            return @endEachNode.index+1
+        if @endDefNode
+            return @endDefNode.index+1
+        if @body.length > 0
+            return @body.last().index+1
+        return @index+1
+    clone:()->
+        node = new ASTNode(@block)
+        for item of this
+            node[item] = this[item]
+        node.body = []
+        for item in @body
+            node.body.push item.clone()
+        node.expressions = []
+        if @expressions and @expressions.length > 0
+            for item in @expressions
+                node.expressions.push item.clone()
+        return node
+isCloseBlock = (block)->
+    console.assert block
+    block.type in ["endIf","else","elseIf","endEach","endDef","endLoop"]
+isStartBlock = (block)->
+    console.assert block
+    block.type in ["if","each","def","loop"]
+    
+parseACSBIf = (blocks,index)->
+    ifBlock = blocks[index]
+    console.assert ifBlock
+    console.assert ifBlock.type is "if"
+    ifNode = new ASTNode ifBlock
+    ifBody = parseACSBNodeBody blocks,index+1
+    ifNode.body = ifBody
+    ifNode.elseIfList = []
+    if ifBody.length > 0
+        end = ifBody.last()
+        endBlock = blocks[end.nextIndex()]
+    else
+        # empty if block
+        endBlock = blocks[ifNode.index+1]
+    if not endBlock
+        throw new Error "Unclosed If"
+    while endBlock.type is "elseIf"
+        elseIfNode = new ASTNode endBlock
+        elseIfBody = parseACSBNodeBody blocks,elseIfNode.index+1
+        ifNode.elseIfList.push elseIfNode
+        elseIfNode.body = elseIfBody
+        end = elseIfBody.last()
+        endBlock = blocks[end.nextIndex()]
+    if endBlock.type not in ["else","endIf"]
+        throw new Error "Unclosed If"
+    if endBlock.type is "else"
+        elseNode = new ASTNode endBlock
+        ifNode.elseNode = elseNode
+        elseBody = parseACSBNodeBody blocks,elseNode.index+1
+        elseNode.body = elseBody
+        if elseBody.length > 0
+            end = elseBody.last()
+            endBlock = blocks[end.nextIndex()]
+        else
+            endBlock = blocks[elseNode.index+1]
+        
+        if endBlock.type isnt "endIf"
+            console.log elseBody.length,endBlock.index
+            console.log "ASDASD",elseNode.type,"!!!",blocks
+            throw new Error "Unclosed If "+endBlock.content
+        ifNode.close = true
+        ifNode.endIfNode = new ASTNode(endBlock)
+        return ifNode
+    else if endBlock.type is "endIf"
+        ifNode.close = true
+        ifNode.endIfNode = new ASTNode(endBlock)
+        return ifNode
+    else 
+        throw new Error "Unexpect Block "+endBlock.content
+parseACSBEach = (blocks,index)->
+    eachBlock = blocks[index]
+    console.assert eachBlock.type is "each"
+    eachNode = new ASTNode(eachBlock)
+    eachBody = parseACSBNodeBody blocks,eachNode.index+1
+    eachNode.body = eachBody
+    if eachBody.length > 0
+        end = eachBody.last()
+        endBlock = blocks[end.nextIndex()]
+    else
+        endBlock = blocks[eachNode.index+1]
+    if endBlock.type isnt "endEach"
+        
+        throw new Error "Unexpect Block "+endBlock.content
+    eachNode.close = true
+    eachNode.endEachNode = new ASTNode endBlock
+    return eachNode
+    
+parseACSBLoop = (blocks,index)->
+    loopBlock = blocks[index]
+    console.assert loopBlock.type is "loop"
+    loopNode = new ASTNode(loopBlock)
+    loopBody = parseACSBNodeBody blocks,loopNode.index+1
+    loopNode.body = loopBody
+    if loopBody.length > 0
+        end = loopBody.last()
+        endBlock = blocks[end.nextIndex()]
+    else
+        endBlock = blocks[loopNode.index+1]
+    if endBlock.type isnt "endLoop"
+        
+        throw new Error "Unexpect Block "+endBlock.content
+    loopNode.close = true
+    loopNode.endLoopNode = new ASTNode endBlock
+    return loopNode
+    
+parseACSBDef = (blocks,index)->
+    defBlock = blocks[index]
+    console.assert defBlock.type is "def"
+    defNode = new ASTNode(defBlock)
+    defBody = parseACSBNodeBody blocks,defNode.index+1
+    defNode.body = defBody
+    if defBody.length > 0
+        end = defBody.last()
+        endBlock = blocks[end.nextIndex()]
+    else
+        endBlock = blocks[defNode.index+1]
+    if endBlock.type isnt "endDef"
+        throw new Error "Unexpect Block "+endBlock.content
+    defNode.close = true
+    defNode.endDefNode = new ASTNode endBlock
+    return defNode
+    
+    
+parseStartBlock = (blocks,index)->
+    console.assert isStartBlock(blocks[index])
+    block = blocks[index]
+    if block.type is "if"
+        return parseACSBIf(blocks,index)
+    if block.type is "each"
+        return parseACSBEach(blocks,index)
+    if block.type is "loop"
+        return parseACSBLoop(blocks,index)
+    if block.type is "def"
+        return parseACSBDef(blocks,index)
+parseACSBNodeBody = (blocks,index)->
+    body = []
+    while block = blocks[index]
+        if not block or isCloseBlock(block)
+            return body
+        if isStartBlock(block)
+            body.push(parseStartBlock(blocks,index))
+        else
+            body.push new ASTNode block
+        index = body.last().nextIndex()
+    return body
+exports.parseACSBTree = (blocks)->
+    tree = parseACSBNodeBody blocks,0
+    console.assert tree.length  > 0
+    nextIndex = tree.last().nextIndex()
+    
+    if nextIndex isnt blocks.length
+        throw new Error "Unexpect Block ",blocks[nextIndex]
+    return tree
+printTree = (tree,indent)->
+    indent = indent or 0
+    createIndent = (count)->
+        ("  " for item in [0..count]).join("")
+    string = createIndent(indent)+"|"
+    for node in tree
+        if node.type is "if"
+            console.log string,"if",node.content
+            printTree node.body,indent+1
+            if node.elseIfList.length > 0
+                for item in node.elseIfList
+                    console.log string,"elseif",item.content
+                    printTree item.body,indent+1
+            if node.elseNode
+                console.log string,"else"
+                printTree node.elseNode.body,indent+1
+            console.log string,"end-if"
+        else if node.type is "each"
+            console.log string,"each",node.content
+            printTree node.body,indent+1
+            console.log string,"end-each"
+        else if node.type is "def"
+            console.log string,"def",node.content
+            printTree node.body,indent+1
+        else if node.type is "call-expand"
+            console.log string,"call-expand->"
+            printTree node.body,indent+1
+            console.log string,"/end call"
+        else
+            console.log string,node.type,node.content
+traverse = (tree,handler)->
+    for item in tree
+        handler item
+        if item.body.length > 0
+            traverse item.body,handler
+        if item.elseIfList and item.elseIfList.length > 0
+            for elseIfNode in item.elseIfList
+                handler(elseIfNode)
+                traverse elseIfNode.body,handler
+        if item.elseNode
+            traverse [item.elseNode],handler
+exports.printTree = printTree
+exports.traverse = traverse

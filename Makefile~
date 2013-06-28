@@ -1,0 +1,4 @@
+test:
+	mocha ./test/acsblock-test.coffee -b -R spec
+
+.PHONY: test

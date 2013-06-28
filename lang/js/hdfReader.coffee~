@@ -1,0 +1,13 @@
+reg = {}
+reg.space = /\s/i
+reg.hdfQuery = /[a-z0-9_.]/i
+parseHDFJson = (string,start,global,current)->
+    index = start
+    while reg.space.test string[index]
+        index++
+    queryStart = index
+    while reg.hdfQuery.test string[index]
+        index++
+    subQuery = string.substring(queryStart,index)
+    if string[index] isnt " "
+        throw new Error "Need space followed by subquery"

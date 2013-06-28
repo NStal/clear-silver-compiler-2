@@ -1,0 +1,10 @@
+
+test functions
+
+string.length 31 == 31
+
+subcount 4 == 4
+
+len (depreciated) 4 == 4
+
+
