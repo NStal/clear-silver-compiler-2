@@ -12,6 +12,10 @@
 #define isStringNode(n) ((n).type == HDF_VALUE_TYPE_STRING)
 #define isReferNode(n) ((n).type == HDF_VALUE_TYPE_REFER)
 
-void parseHdf(csc_string string,HdfPool* pool);
 
+int parseHdf(csc_string *string,HdfPool* pool);
+int pushPathRoute(PathString* path,csc_string* source,int start,int end);
+void restorePathRoute(PathString* path,int flag);
+int parseHdfSubString(csc_string *string,int index,struct PathString* path,HdfPool* pool);
+#include "assert.h"
 #endif /* _HDF_PARSER_H_ */

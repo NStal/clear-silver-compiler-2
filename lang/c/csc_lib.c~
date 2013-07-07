@@ -1,0 +1,185 @@
+#include "csc_lib.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define OutPutBufferLength 1024*1024*10
+int OutPutBufferCursor = 0;
+char OutPutBuffer[OutPutBufferLength];
+HdfPool* workingPool = NULL;
+void SetCSPool(HdfPool* pool){
+  assert(pool);
+  workingPool = pool;
+}
+void PrintBuffer(void){
+  //printf("%d cursor\n",OutPutBufferCursor);
+  OutPutBuffer[OutPutBufferCursor] = '\0';
+  //for(int i=0;i<OutPutBufferCursor;i++){
+  //  //printf("%d->:%d\n",i,(int)OutPutBuffer[i]);
+  //}
+  printf(OutPutBuffer);
+}
+void clean_OutPutBuffer(){
+  OutPutBufferCursor = 0;
+  OutPutBuffer[0] = '\0';
+}
+void CSEcho(const char* msg,int length){
+  if(length <= 0)return;
+  if(OutPutBufferCursor+length > OutPutBufferLength){
+    printf("Maximum Buffer Size %dByte Exceed",OutPutBufferLength);
+    exit(-1);
+  }
+  memcpy(OutPutBuffer+OutPutBufferCursor,msg,length);
+  //printf("echo %s\n",msg);
+  OutPutBufferCursor+=length;
+}
+void intToChars(char* buffer,INT32 value){
+  sprintf(buffer,"%d",value);
+  return;
+}
+void CSVar(CSValue* value){
+  assert(value);
+  if(value->type == CS_TYPE_STRING){
+    CSEcho(value->asString.string->buffer
+	   ,value->asString.string->length);
+  }else if(value->type == CS_TYPE_NUMBER){
+    char number[64];
+    intToChars(number,value->asNumber.number);
+    CSEcho(number,strlen(number));
+  }else if(value->type == CS_TYPE_REFER){
+    HdfNode* node = getReferNodeRecursive(workingPool,value);
+    assert(node->value);
+    assert(node->value->type != CS_TYPE_REFER);
+    CSVar(node->value);
+  }else if(value->type == CS_TYPE_UNDEFINED){
+    return;
+  }
+}
+CSValue* newCSString(const char* chars,int length){
+  CSValue* result = allocCSValue(); 
+  csc_string* string = cscStringFromChars(chars,0,length);
+  result->type = CS_TYPE_STRING;
+  result->asString.string = string;
+  return result;
+}
+CSValue* newCSNumber(int number){
+  CSValue* result = allocCSValue(); 
+  result->type = CS_TYPE_NUMBER;
+  result->asNumber.number = number;
+  return result;
+}
+CSValue* newCSRefer(const char* msg,int length){
+  CSValue* result = allocCSValue();
+  csc_hdfRefer* refer = allocHdfRefer();
+  result->type = CS_TYPE_REFER;
+  result->asRefer.refer = refer;
+  refer->hdfNode = NULL;
+  refer->query = cscStringFromChars(msg,0,length);
+  return result;
+}
+HdfNode* ToHDF(CSValue* value){
+  if(value->type == CS_TYPE_REFER){
+    return getReferNodeRecursive(workingPool,value);
+  }else if(value->type == CS_TYPE_STRING){
+    return getHdfNode(workingPool,(PathString*)value->asString.string);
+  }else{
+    assert(false);
+  }
+}
+void HdfSetReferByChars(const char* path,HdfNode* node){
+  csc_string* string = cscStringFromChars(path,0,strlen(path));
+  csc_hdfRefer* refer = allocHdfRefer();
+  CSValue* value = allocCSValue();
+  value->type = CS_TYPE_REFER;
+  value->asRefer.refer = refer;
+  refer->query = string;
+  refer->hdfNode = node;
+  setHdfValue(workingPool,(PathString*)string,value);
+}
+CSValue *CSOperate_dotRef(CSValue* a,CSValue* b){
+  assert(a->type == CS_TYPE_REFER || a->type == CS_TYPE_STRING);
+  assert(b->type == CS_TYPE_REFER  ||b->type == CS_TYPE_STRING);
+  csc_string* route = NULL;
+  if(b->type == CS_TYPE_REFER){
+    route = b->asRefer.refer->query;
+  }else{
+    route = b->asString.string;
+  }
+  CSValue* result;
+  if(a->type == CS_TYPE_STRING){
+    csc_string*str = cscStringJoinChar(a->asString.string,route,'.');
+    result = allocCSRefer(str);
+  }else{
+    //refer
+    HdfNode* root = getReferNodeRecursive(workingPool,a);
+    HdfNode* node = getHdfNodeFromNode(workingPool,(PathString*)route,root);
+    result = allocCSRefer(NULL);
+    result->asRefer.refer->hdfNode = node;
+  }
+  return result;
+}
+CSValue* CSOperate_add(CSValue* a,CSValue* b){
+  assert(a->type == CS_TYPE_STRING && b->type == CS_TYPE_STRING);
+  CSValue* result = allocCSValue();
+  result->type = CS_TYPE_STRING;
+  result->asString.string = cscStringAdd(a->asString.string,b->asString.string);
+  return result;
+}
+CSValue* CSOperate_dynamicRef(CSValue* a,CSValue* b){
+  assert(a->type == CS_TYPE_REFER || a->type == CS_TYPE_STRING);
+  assert(b->type == CS_TYPE_STRING);
+  //value b can't be number usually
+  return CSOperate_dotRef(a,b);
+}
+CSValue* CSOperate_isEqual(CSValue* a,CSValue* b){
+  assert(a);
+  assert(b);
+  if(a->type == CS_TYPE_REFER){
+    a = (getReferNodeRecursive(workingPool,a))->value;
+  }
+  if(b->type == CS_TYPE_REFER){
+    b = (getReferNodeRecursive(workingPool,b))->value;
+  }
+  if(a->type != b->type){
+    return newCSNumber(0);
+  }
+  if(a->type == CS_TYPE_NUMBER){
+    if(a->asNumber.number!=b->asNumber.number){
+      return newCSNumber(0);
+    } 
+    return newCSNumber(1);
+  }else if(a->type == CS_TYPE_STRING){
+    if(cscStringEqual(a->asString.string,b->asString.string)){
+      return newCSNumber(1);
+    }
+    return newCSNumber(0);
+  }else if(a->type == CS_TYPE_UNDEFINED){
+    return newCSNumber(0);
+  }
+  assert(false);
+  return newCSNumber(0);
+}
+int CSIf(CSValue* value){
+  assert(value->type == CS_TYPE_NUMBER);
+  return value->asNumber.number;
+}
+CSValue* CSOperate_forceHDFRef(CSValue* value){
+  return value;
+}
+CSValue* CSOperate_forceNumber(CSValue* value){
+  if(value->type == CS_TYPE_NUMBER)
+    return value;
+  csc_string* str = NULL;
+  if(value->type == CS_TYPE_STRING){
+    str = value->asString.string;
+  }else if(value->type == CS_TYPE_REFER){
+    str = value->asRefer.refer->query;
+  }else{
+    return newCSNumber(0);
+  }
+  //char buffer[64];
+  //Though no promised
+  //string->buffer should end with '\0'
+  assert(str->buffer[str->length] == '\0');
+  int number = atoi(str->buffer);
+  return newCSNumber(number);
+}

@@ -1,0 +1,111 @@
+#include "csc_primitive.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include "csc_common.h"
+#define CSC_STRING_BUFFER_LENGTH 1024 * 1024 *20
+#define CSC_STRING_STRUCT_COUNT 1024 * 10
+char StringBuffer[CSC_STRING_BUFFER_LENGTH];
+csc_string StringStructBuffer[CSC_STRING_STRUCT_COUNT];
+int BufferOffsetCursor = 0;
+int StructOffsetCursor = 0;
+
+//Note:length is not include the '\0'
+//On the other hand given an length + 1 
+//will not ris any problem.
+csc_string* cscAllocString(int length){
+  // Note we give extra space for '\0'
+  // Here may I add some extra space
+  // until 4byte padding for memory performance wo    
+  // Better Memory Padding gives Better performace
+  // But not implemented in this version
+  
+  if(StructOffsetCursor+1>= CSC_STRING_STRUCT_COUNT ||
+     BufferOffsetCursor+length+1 > CSC_STRING_BUFFER_LENGTH){
+    die("Fail to Alloc CSCString Space");
+    return NULL;
+  }
+  csc_string* str = StringStructBuffer+StructOffsetCursor;
+  str->buffer = StringBuffer+BufferOffsetCursor;
+  BufferOffsetCursor+=length+1;
+  str->length = length;
+  str->buffer[length] = '\0';
+  return StringStructBuffer+StructOffsetCursor++;
+}
+csc_string* cscSubString(csc_string* string,int start,int end){
+  // Don't check offset
+  // We leave it to call host for performance optimize
+  int index = 0;
+  assert(end >= start); 
+  csc_string* result = cscAllocString(end-start);
+  while(start+index<end){
+    assert(result->buffer);
+    result->buffer[index] = string->buffer[start+index];
+    index++;
+  }
+  return result;
+}
+int cscIndexOf(csc_string* string,csc_string* target,int start){
+  int strIndex = start;
+  int targetIndex = 0;
+  while(strIndex+target->length <= string->length){
+    while(string->buffer[strIndex+targetIndex] == target->buffer[targetIndex]){
+      targetIndex++;
+      if(targetIndex == target->length){
+	return strIndex;
+      }
+    }
+    targetIndex = 0;
+    strIndex++;
+  }
+  return -1;
+}
+int cscIndexOfChar(csc_string* string,char code,int start){
+  int index = start;
+  while(index < string->length){
+    if(string->buffer[index] == code){
+      return index;
+    }
+    index++;
+  }
+  return -1;
+}
+csc_string* cscStringAdd(csc_string* a,csc_string* b){
+  csc_string* result = cscAllocString(a->length+b->length);
+  memcpy(result->buffer,a->buffer,a->length);
+  memcpy(result->buffer+a->length,b->buffer,b->length);
+  return result;
+}
+csc_string* cscStringJoinChar(csc_string* a,csc_string* b,char code){
+  csc_string* result = cscAllocString(a->length+b->length+1);
+  memcpy(result->buffer,a->buffer,a->length);
+  result->buffer[a->length] = code;
+  memcpy(result->buffer+a->length+1,b->buffer,b->length);
+  return result;
+}
+csc_string* cscStringFromChars(const char* chars,int start,int end){
+  csc_string* str = cscAllocString(end-start);
+  int index = 0;
+  while(start<end){
+    str->buffer[index] = chars[start];
+    index++;
+    start++;
+  }
+  printf("from chars:");
+  cscPrintString(str);
+  printf("\n");
+  return str;
+}
+void cscPrintString(csc_string* string){
+  // Note: thought we alloc a \0 space for csc_string
+  // This is not always true, But I don't 
+  // have enough time to check
+  // So just set \0 an print it
+  if(!string){
+    printf("csc_string(NULL)");
+    return;
+  }
+  string->buffer[string->length] = '\0';
+  printf(string->buffer);
+  return;
+}

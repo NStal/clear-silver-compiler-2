@@ -1,8 +1,9 @@
+
 <?cs def:Date._weekday(day,four) ?>
 <?cs each:wday = Days ?>
-<?cs if:wday == day ?>
-<?cs var:wday.Abbr ?>
-<?cs /if ?>
+  <?cs if:wday == day ?>
+    <?cs var:wday.Abbr ?>
+  <?cs /if ?>
 <?cs /each ?>
 <?cs if:day == "6" ?>
 <?cs var:Days.0.Abbr ?>
@@ -13,7 +14,7 @@
 <?cs elseif:day == "2" ?>
 <?cs var:Days.3.Abbr ?>
 <?cs elseif:day == "3" ?>
-<?cs var:Days.4.Abbr ?>
+<?cs var:Days.4["Ab"+"br"] ?>
 <?cs elseif:day == "4" ?>
 <?cs var:Days.5.Abbr ?>
 <?cs elseif:day == "5" ?>
@@ -23,7 +24,7 @@
 
 
 <?cs def:echo(wow) ?>
-<?cs var:$wow ?>
+  <?cs var:$wow ?>
 <?cs /def ?>
 
 before weekday
@@ -51,11 +52,11 @@ echo a number: 5
 <?cs call:call_echo(#5) ?>
 
 <?cs def:echo2(bar) ?>
-<?cs var:wow ?>
+  <?cs var:wow ?>
 <?cs /def ?>
 
 <?cs def:call_echo2(wow, weird) ?>
-<?cs call:echo2(weird) ?>
+  <?cs call:echo2(weird) ?>
 <?cs /def ?>
 
 these tests show that local variables are live in sub calls 
@@ -69,11 +70,11 @@ echo a number: 5
 after echo
 
 <?cs def:print_day(d) ?>
-<?cs var:d ?> == <?cs var:d.Abbr ?>
+  <?cs var:d ?> == <?cs var:d.Abbr ?>
 <?cs /def ?>
 
 testing macro calls in local vars in an each
 <?cs each:day=Days ?>
-<?cs call:print_day(day) ?>
-<?cs call:echo(day.Abbr) ?>
+  <?cs call:print_day(day) ?>
+  <?cs call:echo(day.Abbr) ?>
 <?cs /each ?>

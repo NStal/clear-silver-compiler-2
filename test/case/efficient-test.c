@@ -1,0 +1,194 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "csc_core.h"
+#include "csc_lib.h"
+#include "hdf.h"
+#include "hdf_parser.h"
+#include "csc_resource.h"
+void CSC_HdfInterpreter(void);
+
+void CSC_HdfInterpreter(){
+  CSEcho("",0);
+  CSEcho("\n\n",2);
+  //call-expand Date._weekday
+  CSEcho("\n",1);
+  CSValue* __CSVar_1=newCSRefer("Days",4);
+  CSValue* refer9 = __CSVar_1;
+  HdfNode* nodeRefer9 = ToHDF(refer9);
+  for(int index9=0;index9 < nodeRefer9->children->length;index9++){
+    HdfSetReferByChars("wday",(HdfNode*)cscArrayGet(nodeRefer9->children,index9));
+    CSEcho("\n  ",3);
+    while(1){// to simulate if else
+      CSValue* __CSVar_3=newCSRefer("wday",4);
+      CSValue* __CSVar_4=newCSRefer("Foo",3);
+      CSValue* __CSVar_2=CSOperate_isEqual(__CSVar_3,__CSVar_4);
+      if(CSIf(__CSVar_2)){
+        CSEcho("\n    ",5);
+	CSValue* __CSVar_6=newCSRefer("wday",4);
+	CSValue* __CSVar_7=newCSRefer("Abbr",4);
+	CSValue* __CSVar_5=CSOperate_dotRef(__CSVar_6,__CSVar_7);
+	CSVar(__CSVar_5);
+	CSEcho("\n  ",3);
+        break;
+      }
+      
+      break;
+    }
+    CSEcho("\n",1);
+  }
+  CSEcho("\n",1);
+  while(1){// to simulate if else
+    CSValue* __CSVar_9=newCSRefer("Foo",3);
+    CSValue* __CSVar_10=newCSString("6",1);
+    CSValue* __CSVar_8=CSOperate_isEqual(__CSVar_9,__CSVar_10);
+    if(CSIf(__CSVar_8)){
+      CSEcho("\n",1);
+      CSValue* __CSVar_13=newCSRefer("Days",4);
+      CSValue* __CSVar_14=newCSRefer("0",1);
+      CSValue* __CSVar_12=CSOperate_dotRef(__CSVar_13,__CSVar_14);
+      CSValue* __CSVar_15=newCSRefer("Abbr",4);
+      CSValue* __CSVar_11=CSOperate_dotRef(__CSVar_12,__CSVar_15);
+      CSVar(__CSVar_11);
+      CSEcho("\n",1);
+      break;
+    }
+    CSValue* __CSVar_17=newCSRefer("Foo",3);
+    CSValue* __CSVar_18=newCSString("0",1);
+    CSValue* __CSVar_16=CSOperate_isEqual(__CSVar_17,__CSVar_18);
+    if(CSIf(__CSVar_16)){
+      CSEcho("\n",1);
+      CSValue* __CSVar_21=newCSRefer("Days",4);
+      CSValue* __CSVar_22=newCSRefer("1",1);
+      CSValue* __CSVar_20=CSOperate_dotRef(__CSVar_21,__CSVar_22);
+      CSValue* __CSVar_23=newCSRefer("Abbr",4);
+      CSValue* __CSVar_19=CSOperate_dotRef(__CSVar_20,__CSVar_23);
+      CSVar(__CSVar_19);
+      CSEcho("\n",1);
+      break;
+    }
+    CSValue* __CSVar_25=newCSRefer("Foo",3);
+    CSValue* __CSVar_26=newCSString("1",1);
+    CSValue* __CSVar_24=CSOperate_isEqual(__CSVar_25,__CSVar_26);
+    if(CSIf(__CSVar_24)){
+      CSEcho("\n",1);
+      CSValue* __CSVar_29=newCSRefer("Days",4);
+      CSValue* __CSVar_30=newCSRefer("2",1);
+      CSValue* __CSVar_28=CSOperate_dotRef(__CSVar_29,__CSVar_30);
+      CSValue* __CSVar_31=newCSRefer("Abbr",4);
+      CSValue* __CSVar_27=CSOperate_dotRef(__CSVar_28,__CSVar_31);
+      CSVar(__CSVar_27);
+      CSEcho("\n",1);
+      break;
+    }
+    CSValue* __CSVar_33=newCSRefer("Foo",3);
+    CSValue* __CSVar_34=newCSString("2",1);
+    CSValue* __CSVar_32=CSOperate_isEqual(__CSVar_33,__CSVar_34);
+    if(CSIf(__CSVar_32)){
+      CSEcho("\n",1);
+      CSValue* __CSVar_37=newCSRefer("Days",4);
+      CSValue* __CSVar_38=newCSRefer("3",1);
+      CSValue* __CSVar_36=CSOperate_dotRef(__CSVar_37,__CSVar_38);
+      CSValue* __CSVar_39=newCSRefer("Abbr",4);
+      CSValue* __CSVar_35=CSOperate_dotRef(__CSVar_36,__CSVar_39);
+      CSVar(__CSVar_35);
+      CSEcho("\n",1);
+      break;
+    }
+    CSValue* __CSVar_41=newCSRefer("Foo",3);
+    CSValue* __CSVar_42=newCSString("3",1);
+    CSValue* __CSVar_40=CSOperate_isEqual(__CSVar_41,__CSVar_42);
+    if(CSIf(__CSVar_40)){
+      CSEcho("\n",1);
+      CSValue* __CSVar_45=newCSRefer("Days",4);
+      CSValue* __CSVar_46=newCSRefer("4",1);
+      CSValue* __CSVar_44=CSOperate_dotRef(__CSVar_45,__CSVar_46);
+      CSValue* __CSVar_47=newCSRefer("Abbr",4);
+      CSValue* __CSVar_43=CSOperate_dotRef(__CSVar_44,__CSVar_47);
+      CSVar(__CSVar_43);
+      CSEcho("\n",1);
+      break;
+    }
+    CSValue* __CSVar_49=newCSRefer("Foo",3);
+    CSValue* __CSVar_50=newCSString("4",1);
+    CSValue* __CSVar_48=CSOperate_isEqual(__CSVar_49,__CSVar_50);
+    if(CSIf(__CSVar_48)){
+      CSEcho("\n",1);
+      CSValue* __CSVar_53=newCSRefer("Days",4);
+      CSValue* __CSVar_54=newCSRefer("5",1);
+      CSValue* __CSVar_52=CSOperate_dotRef(__CSVar_53,__CSVar_54);
+      CSValue* __CSVar_55=newCSRefer("Abbr",4);
+      CSValue* __CSVar_51=CSOperate_dotRef(__CSVar_52,__CSVar_55);
+      CSVar(__CSVar_51);
+      CSEcho("\n",1);
+      break;
+    }
+    CSValue* __CSVar_57=newCSRefer("Foo",3);
+    CSValue* __CSVar_58=newCSString("5",1);
+    CSValue* __CSVar_56=CSOperate_isEqual(__CSVar_57,__CSVar_58);
+    if(CSIf(__CSVar_56)){
+      CSEcho("\n",1);
+      CSValue* __CSVar_61=newCSRefer("Days",4);
+      CSValue* __CSVar_62=newCSRefer("6",1);
+      CSValue* __CSVar_60=CSOperate_dotRef(__CSVar_61,__CSVar_62);
+      CSValue* __CSVar_63=newCSRefer("Abbr",4);
+      CSValue* __CSVar_59=CSOperate_dotRef(__CSVar_60,__CSVar_63);
+      CSVar(__CSVar_59);
+      CSEcho("\n",1);
+      break;
+    }
+    
+    break;
+  }
+  CSEcho("\n",1);
+  CSEcho("\n",1);
+}
+
+
+#define maxHdfStringLength 1024*1024*10
+char buffer[maxHdfStringLength];
+int main(int argc, char *argv[]){
+  csc_string hdfString = {(INT32)0,buffer};
+  FILE* fp = NULL;
+  if(argc != 2){
+    printf("usage program <hdf_path>\n");
+    return -1;
+  }
+  
+  fp = fopen(argv[1],"r+");
+  if(fp == NULL){
+    printf("hdf file %s not exists.\n",argv[1]);
+    return -1;
+  }
+  while(true){
+    int count = fread(hdfString.buffer+hdfString.length,1,1024,fp);
+    if(count>0){
+      hdfString.length += count;
+      if(maxHdfStringLength <= hdfString.length){
+	printf("hdf file is too long(over 10m)");
+	return -1;
+      }
+    }else{
+      break;
+    } 
+  }
+  hdfString.buffer[hdfString.length] = '\0';
+  int times = 1000*100;
+  HdfPool* pool = createHdfPool(HDF_POOL_LENGTH);
+  SetCSPool(pool);
+  
+  parseHdf(&hdfString,pool);
+  while(--times>0){
+    //printf("%d",times);
+    ensureHdfPoolRoot(pool);
+    CSC_HdfInterpreter();
+    clean_primitive();
+    clean_Hdf();
+    clean_CSValue();
+    clean_hdfRefer();
+    clean_array();
+    clean_OutPutBuffer();
+    //cleanUp();
+  }
+  PrintBuffer();
+  return 0;
+}

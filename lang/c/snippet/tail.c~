@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "csc_core.h"
-#include "hdf.h"
-#include "hdf_parser.h"
+
 #define maxHdfStringLength 1024*1024*10
 char buffer[maxHdfStringLength];
 int main(int argc, char *argv[]){
@@ -30,15 +26,12 @@ int main(int argc, char *argv[]){
       break;
     } 
   }
-  
   hdfString.buffer[hdfString.length] = '\0';
-  printf("load from path \"%s\" length %d\n",argv[1],hdfString.length);
-  printf("test_sizeof(\"123456789\"): %d\n",sizeof("123456789"));
   HdfPool* pool = createHdfPool(HDF_POOL_LENGTH);
-  printf("start parse hdf\n");
+  SetCSPool(pool);
   parseHdf(&hdfString,pool);
   ensureHdfPoolRoot(pool);
-  printf("end parse hdf\n");
-  printHdfTree(pool->root,0);
+  CSC_HdfInterpreter();
+  PrintBuffer();
   return 0;
 }

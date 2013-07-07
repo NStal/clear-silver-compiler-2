@@ -1,0 +1,7 @@
+void* cleaners[MaxCleanerCount];
+int cleanerCursor = 0;
+int registerCleaner(void (*funct)()){
+  if(cleanerCursor<MaxCleanerCount){
+    
+  }
+}

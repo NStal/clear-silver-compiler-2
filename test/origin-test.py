@@ -6,3 +6,4 @@ for test in filter(lambda x:x.find(".cs") == len(x)-3,os.listdir("case/")):
     print test
     os.system("%s -h case/test.hdf -c %s > %s" % (csExePath,test,test+".gold"))
         
+    

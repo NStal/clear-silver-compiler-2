@@ -11,7 +11,7 @@ flattenExpressionNode = (node,results)->
     # final value
     if node.children.length is 0
         id = createId()
-        if node.isNumber and node.forceNumber 
+        if node.isNumber and node.forceNumber
             results.push {type:"init",id:id,value:node.value,valueType:"number"}
             
         else if node.isString

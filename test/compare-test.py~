@@ -1,0 +1,2 @@
+import os
+csExePath = "./cs-bin/out/Debug/cs"

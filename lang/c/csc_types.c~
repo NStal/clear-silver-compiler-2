@@ -1,0 +1,19 @@
+#include "csc_types.h"
+#define MaxCSValue 1024*1024
+CSValue CSValueBuffer[MaxCSValue];
+int CSValueBufferCursor = 0;
+CSValue* allocCSValue(){
+  return CSValueBuffer+CSValueBufferCursor++;
+}
+CSValue* allocCSString(csc_string* string){
+  CSValue* value = allocCSValue();
+  value->asString.type = CS_TYPE_STRING;
+  value->asString.string = string;
+  return value;
+}
+CSValue* allocCSRefer(csc_string* string){
+  CSValue* value = allocCSValue(); 
+  value->asRefer.type = CS_TYPE_REFER;
+  value->asString.string = string;
+  return value;
+}
